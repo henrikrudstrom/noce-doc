@@ -8,8 +8,8 @@ window.renderMesh = function renderMesh(elem, meshData) {
         var material =  new THREE.MeshNormalMaterial()
         material.side = THREE.DoubleSide;
         var mesh = new THREE.Mesh(geometry, material);
-
-        return mesh;
+        var points = new THREE.Points(geometry, new THREE.PointsMaterial({color: 0xFF0000, size: 1}) )
+        return [mesh, points];
       }
 
       var three = THREE.Bootstrap({ // With given options
@@ -35,10 +35,13 @@ window.renderMesh = function renderMesh(elem, meshData) {
 
       three.renderer.setClearColor(0xffffff, 0);
       console.log("doing it")
-      var mesh = createGeometry(meshData);
+      var geometries = createGeometry(meshData);
+      var mesh = geometries[0];
+      var points = geometries[1];
       console.log(meshData);
       console.log(mesh);
       three.scene.add(mesh);
+      //three.scene.add(points);
       var bbox = new THREE.BoundingBoxHelper(mesh);
       bbox.update();
       var box = bbox.box;

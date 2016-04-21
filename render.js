@@ -19,7 +19,7 @@ function runExampleFile(file) {
     relPath = './' + relPath;
   var example = require(relPath);
   var shapes = arrify(example());
-  var meshes = shapes.map(shape => mesh(shape, 5, 20, false));
+  var meshes = shapes.map(shape => mesh(shape, 0.01, 20, true));
 
   return JSON.stringify(meshes, replacer);
 }

@@ -6,6 +6,7 @@
   "dependencies": {},
   "devDependencies": {
     "arrify": "^1.0.1",
+    "glob": "^7.0.3",
     "mathjs": "^3.2.0"
   },
   "scripts": {
