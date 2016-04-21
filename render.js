@@ -3,63 +3,62 @@ var fs = require('fs');
 var glob = require('glob');
 var arrify = require('arrify');
 var mesh = require('../noce/lib/mesh.js');
+var es = require('event-stream');
+var gutil = require('gulp-util');
+var reload = require('require-reload')(require);
 
+// filter json numbers
 function replacer(key, value) {
   if (value.constructor.name === 'Float32Array' || value.constructor.name === 'Int32Array')
     return Array.prototype.slice.call(value);
-  if (typeof value === "number") {
+
+  if (typeof value === "number")
     return Number((Math.round(value * 10000) / 10000).toPrecision(4))
-  }
+
   return value;
 }
 
 function runExampleFile(file) {
   var relPath = path.relative(__dirname, file);
-  if(!relPath.startsWith('.'))
+
+  if (!relPath.startsWith('.'))
     relPath = './' + relPath;
-  var example = require(relPath);
+
+  var example = reload(relPath);
   var shapes = arrify(example());
   var meshes = shapes.map(shape => mesh(shape, 0.01, 20, true));
 
   return JSON.stringify(meshes, replacer);
 }
-//module.exports = renderThreeJSExample
-function runExample(options){
-  options = options || {};
-  var keys = options.keys || [];
 
-  return function(files, metalsmith, done){
-    setImmediate(done);
-    Object.keys(files).forEach(file => {
-      var data = files[file];
-      console.log(data);
-      console.log(metalsmith)
-      var mesh = runExampleFile(path.join(metalsmith._directory, 'src', file));
-
-      console.log(mesh)
-    });
-  };
-}
-function renderExample(file){
+function renderExample(file) {
   var basename = path.basename(file).replace('.js', '');
-  var template = String(fs.readFileSync('src/shapeTemplate.html'));
-  var mesh = runExampleFile(file);
-  template = template.replace('${meshData}', mesh);
-  fs.writeFileSync('./examples/build/'+basename+'.html', template);
+  var mesh;
 
+  try {
+    mesh = runExampleFile(file);
+  } catch (error) {
+    var template = String(fs.readFileSync('src/errorTemplate.html'));
+    var msg = error.stack.split('\n').map(line => '<div>'+line+'</div>').join('\n');
+    return template.replace('${errorMessage}', error.toString() + msg);
+  }
+
+  var template = String(fs.readFileSync('src/shapeTemplate.html'));
+  return template.replace('${meshData}', mesh);
 }
 
-glob.sync('examples/src/*.js').forEach(renderExample);
+module.exports = function(opt) {
+  function modifyFile(file) {
+    if (file.isNull()) return this.emit('data', file);
+    if (file.isStream()) return this.emit('error', new Error("noce-doc: Streaming not supported"));
 
-// var Metalsmith = require('metalsmith');
-// Metalsmith('./examples')
-//   .use(runExample())
-//   .build(function(err) {
-//     if (err) throw err;
-//   });
-// Metalsmith(__dirname)
-//   .use(markdown())
-//   .use(layouts('handlebars'))
-//   .build(function(err) {
-//     if (err) throw err;
-//   });
+    var dest = gutil.replaceExtension(file.path, ".html");
+    var src = renderExample(file.path);
+
+    file.contents = new Buffer(src);
+    file.path = dest;
+    this.emit('data', file);
+  }
+
+  return es.through(modifyFile);
+};
