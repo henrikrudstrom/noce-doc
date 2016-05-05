@@ -24,9 +24,15 @@ function runExampleFile(file) {
   if (!relPath.startsWith('.'))
     relPath = './' + relPath;
 
-  var example = reload(relPath);
+  var example = require(relPath);
+  console.log("GO!");
   var shapes = arrify(example());
-  var meshes = shapes.map(shape => mesh(shape, 0.01, 20, true));
+  console.log("SHAPES", shapes);
+  var faces = shapes.map(shape => shape.faces ? shape.faces() : [shape])
+    .reduce((a, b) => a.concat(b));
+  console.log("faces", faces);
+  var meshes = faces.map(face => mesh(face, 0.02, 20, true));
+  console.log("done");
 
   return JSON.stringify(meshes, replacer);
 }
@@ -62,3 +68,4 @@ module.exports = function(opt) {
 
   return es.through(modifyFile);
 };
+module.exports.renderExample = renderExample;

@@ -6,11 +6,12 @@ const gulp = require('gulp'),
   runSequence = require('run-sequence');
 
 
+
 gulp.task('serve', function() {
   gulp.src('dist')
     .pipe(webserver({
       livereload: true,
-      open: true
+      //open: true
     }));
 });
 
@@ -22,7 +23,7 @@ gulp.task('render', function() {
 
 gulp.task('watch', function() {
     gulp.src('examples/*.js')
-      .pipe(watch('examples/*.js'))
+      .pipe(watch(['examples/*.js', './*.js']))
       .pipe(render())
       .pipe(gulp.dest('dist/examples'));
   })
