@@ -24,15 +24,11 @@ function runExampleFile(file) {
   if (!relPath.startsWith('.'))
     relPath = './' + relPath;
 
-  var example = require(relPath);
-  console.log("GO!");
+  var example = reload(relPath);
   var shapes = arrify(example());
-  console.log("SHAPES", shapes);
   var faces = shapes.map(shape => shape.faces ? shape.faces() : [shape])
     .reduce((a, b) => a.concat(b));
-  console.log("faces", faces);
   var meshes = faces.map(face => mesh(face, 0.02, 20, true));
-  console.log("done");
 
   return JSON.stringify(meshes, replacer);
 }
